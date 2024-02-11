@@ -1,0 +1,24 @@
+#!/bin/bash
+
+TXT=/tmp/cookies.txt
+URL="https://launchpad.classlink.com/login"
+AUTH="username=USER&password=PASS&code=ORG"
+#substitute fields for own login
+
+function get-csrf {
+  curl -s -c $TXT "$URL" \
+  | sed -n "/csrfToken/ s:^.* = {\(.*\)};</script>$:{\1}:p" \
+  | jq -r '.csrfToken'
+}
+
+function get-login {
+  curl -s -b $TXT -d "$AUTH" -H "csrf-token: $1" -e "$URL" "$URL" \
+  | jq -r '.response'
+}
+
+sleep $(shuf -i 1-179 -n 1)
+x=$(get-csrf)
+sleep $(shuf -i 1-59 -n 1)
+x=$(get-login $x)
+date +"%D %T|$x" >>$0.log
+
